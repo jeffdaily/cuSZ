@@ -36,8 +36,8 @@ void f(szt len, u4 seed)
   // pszmem_device_deepcopy_cuda(in_cuda->m, in_cpu->m);
   // pszmem_device_deepcopy_cuda(in_thrust->m, in_cpu->m);
 #elif defined(PSZ_USE_HIP)
-  pszmem_device_deepcopy_hip(in_cuda->m, in_cpu->m);
-  pszmem_device_deepcopy_hip(in_thrust->m, in_cpu->m);
+  // pszmem_device_deepcopy_hip(in_cuda->m, in_cpu->m);
+  // pszmem_device_deepcopy_hip(in_thrust->m, in_cpu->m);
 #endif
 
   f4 res_cpu[4], res_thrust[4], res_cuda[4];

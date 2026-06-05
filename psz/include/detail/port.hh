@@ -15,7 +15,7 @@
 #include "macro/c_cu2hip_1_fix_primitives.h"
 #include "macro/c_cu2hip_2_suppress_warning.h"
 
-#define PROPER_RUNTIME psz_runtime::HIP
+#define PROPER_RUNTIME psz_runtime::ROCM
 #define PROPER_EB f8
 
 #elif defined(PSZ_USE_1API)

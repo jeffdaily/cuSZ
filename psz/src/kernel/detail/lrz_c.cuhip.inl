@@ -1,4 +1,8 @@
+#if defined(_PORTABLE_USE_HIP) || defined(__HIP_PLATFORM_AMD__)
+#include <hip/hip_cooperative_groups.h>
+#else
 #include <cooperative_groups.h>
+#endif
 namespace cg = cooperative_groups;
 
 #define COUNT_LOCAL_STAT(DELTA, IS_VALID_RANGE)           \

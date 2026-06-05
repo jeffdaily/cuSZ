@@ -10,6 +10,13 @@
  *
  */
 
+#if defined(PSZ_USE_CUDA) || defined(_PORTABLE_USE_CUDA)
+#include <cuda_runtime.h>
+#elif defined(PSZ_USE_HIP) || defined(_PORTABLE_USE_HIP)
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#endif
+
 #include "compressor.hh"
 #include "cusz.h"
 #include "cusz/context.h"

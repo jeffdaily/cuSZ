@@ -1,12 +1,21 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project(PORTABLE
-  VERSION 0.1.0
-  LANGUAGES CXX CUDA
-)
-
-find_package(CUDAToolkit REQUIRED)
+# Detect if we're building with HIP or CUDA based on parent project
+if(PSZ_USE_HIP OR DEFINED PSZ_BACKEND AND (PSZ_BACKEND STREQUAL "HIP" OR PSZ_BACKEND STREQUAL "hip"))
+  project(PORTABLE
+    VERSION 0.1.0
+    LANGUAGES CXX HIP
+  )
+  set(_PORTABLE_USE_HIP ON)
+else()
+  project(PORTABLE
+    VERSION 0.1.0
+    LANGUAGES CXX CUDA
+  )
+  find_package(CUDAToolkit REQUIRED)
+  set(_PORTABLE_USE_HIP OFF)
+endif()
 
 # ------------------------------------------------------------------------------
 # Header-only interface target
@@ -19,10 +28,17 @@ target_compile_features(PORTABLE
     cxx_std_17
 )
 
-target_compile_definitions(PORTABLE
-  INTERFACE
-    _PORTABLE_USE_CUDA
-)
+if(_PORTABLE_USE_HIP)
+  target_compile_definitions(PORTABLE
+    INTERFACE
+      _PORTABLE_USE_HIP
+  )
+else()
+  target_compile_definitions(PORTABLE
+    INTERFACE
+      _PORTABLE_USE_CUDA
+  )
+endif()
 
 target_include_directories(PORTABLE
   INTERFACE

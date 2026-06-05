@@ -36,6 +36,13 @@
 #ifndef BF331734_1965_456A_9C12_6FBE16CCAB4E
 #define BF331734_1965_456A_9C12_6FBE16CCAB4E
 
+#if defined(PSZ_USE_CUDA) || defined(_PORTABLE_USE_CUDA)
+#include <cuda_runtime.h>
+#elif defined(PSZ_USE_HIP) || defined(_PORTABLE_USE_HIP) || defined(__HIP_PLATFORM_AMD__)
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#endif
+
 struct cu_hip_diagnostics {
   static void get_device_property()
   {

@@ -11,6 +11,15 @@
 
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
+#include <thrust/extrema.h>
+#include <thrust/transform.h>
+
+#if defined(_PORTABLE_USE_CUDA)
+#include <cuda_runtime.h>
+#elif defined(_PORTABLE_USE_HIP)
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#endif
 
 #include "cusz/type.h"
 #include "detail/compare.hh"

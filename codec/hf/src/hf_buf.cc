@@ -1,4 +1,9 @@
+#if defined(PHF_USE_CUDA)
 #include <cuda.h>
+#elif defined(PHF_USE_HIP)
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#endif
 
 #include "hf.h"
 #include "hf_hl.hh"

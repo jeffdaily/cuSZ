@@ -1,109 +1,220 @@
-add_compile_definitions(PSZ_USE_HIP)
-add_compile_definitions(_PORTABLE_USE_HIP)
+# ------------------------------------------------------------------------------
+# Source code switches
+# ------------------------------------------------------------------------------
+
+add_compile_definitions(
+  PSZ_USE_HIP
+  _PORTABLE_USE_HIP
+)
 
 find_package(hip REQUIRED)
-
 find_package(rocthrust REQUIRED)
-if(rocthrust_FOUND)
-  message("[psz::info] rocthrust FOUND")
-  message("[psz::info] $\{rocthrust_INCLUDE_DIRS\}: " ${rocthrust_INCLUDE_DIRS})
-  message("[psz::info] $\{rocthrust_LIBRARIES\}: " ${rocthrust_LIBRARIES})
-  include_directories(${rocthrust_INCLUDE_DIRS})
-endif()
-
 find_package(rocprim REQUIRED)
-if(rocprim_FOUND)
-  message("[psz::info] rocprim FOUND")
-  message("[psz::info] $\{rocprim_INCLUDE_DIRS\}: " ${rocprim_INCLUDE_DIRS})
-  message("[psz::info] $\{rocprim_LIBRARIES\}: " ${rocprim_LIBRARIES})
-  include_directories(${rocprim_INCLUDE_DIRS})
-endif()
-
 find_package(hiprand REQUIRED)
-if(hiprand_FOUND)
-  message("[psz::info] hiprand FOUND")
-  message("[psz::info] $\{hiprand_INCLUDE_DIRS\}: " ${hiprand_INCLUDE_DIRS})
-  message("[psz::info] $\{hiprand_LIBRARIES\}: " ${hiprand_LIBRARIES})
-  include_directories(${hiprand_INCLUDE_DIRS})
-endif()
-
 find_package(rocrand REQUIRED)
-if(hiprand_FOUND)
-  message("[psz::info] rocrand FOUND")
-  message("[psz::info] $\{rocrand_INCLUDE_DIRS\}: " ${rocrand_INCLUDE_DIRS})
-  message("[psz::info] $\{rocrand_LIBRARIES\}: " ${rocrand_LIBRARIES})
-  include_directories(${rocrand_INCLUDE_DIRS})
-endif()
+
+message("[psz::info] rocthrust_INCLUDE_DIRS: ${rocthrust_INCLUDE_DIRS}")
+message("[psz::info] rocprim_INCLUDE_DIRS: ${rocprim_INCLUDE_DIRS}")
+message("[psz::info] hiprand_INCLUDE_DIRS: ${hiprand_INCLUDE_DIRS}")
+message("[psz::info] rocrand_INCLUDE_DIRS: ${rocrand_INCLUDE_DIRS}")
 
 include(GNUInstallDirs)
 include(CTest)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cusz_version.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/include/cusz_version.h)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/psz/src/cusz_version.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/psz/include/cusz_version.h"
+  @ONLY
+)
 
-add_library(pszcompile_settings INTERFACE)
+# ------------------------------------------------------------------------------
+# Common compile settings (interface target)
+# ------------------------------------------------------------------------------
 
-target_compile_definitions(
-  pszcompile_settings
-  INTERFACE $<$<COMPILE_LANG_AND_ID:HIP,Clang>:__STRICT_ANSI__> -D__HIP_PLATFORM_AMD__)
-target_compile_features(pszcompile_settings INTERFACE cxx_std_14) # [TODO] should be 17
-target_include_directories(
-  pszcompile_settings
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/cusz>)
+add_library(psz_hip_compile_settings INTERFACE)
 
-add_library(pszstat_seq src/stat/compare.stl.cc)
-target_link_libraries(pszstat_seq PUBLIC pszcompile_settings)
+target_compile_features(psz_hip_compile_settings
+  INTERFACE
+    cxx_std_17
+)
 
-add_library(
-  pszstat_hip src/stat/extrema.hip src/stat/cmpg2.hip src/stat/cmpg4_1.hip
-              src/stat/cmpg4_2.hip src/stat/cmpg5_1.hip src/stat/cmpg5_2.hip)
-target_link_libraries(pszstat_hip PUBLIC pszcompile_settings roc::rocthrust)
+target_compile_definitions(psz_hip_compile_settings
+  INTERFACE
+    $<$<COMPILE_LANG_AND_ID:HIP,Clang>:__STRICT_ANSI__>
+    __HIP_PLATFORM_AMD__
+)
+
+target_compile_options(psz_hip_compile_settings
+  INTERFACE
+    $<$<COMPILE_LANGUAGE:HIP>:-Wno-deprecated-declarations>
+)
+
+target_include_directories(psz_hip_compile_settings
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/psz/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/psz/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/psz/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/cusz>
+)
+
+# ------------------------------------------------------------------------------
+# Dependencies (installed or fallback)
+# ------------------------------------------------------------------------------
+
+find_package(PORTABLE QUIET)
+if(NOT TARGET PORTABLE::PORTABLE AND NOT TARGET PORTABLE)
+  add_subdirectory(portable)
+endif()
+
+# Normalize PORTABLE target name
+set(_PORTABLE_TARGET "")
+if(TARGET PORTABLE::PORTABLE)
+  set(_PORTABLE_TARGET PORTABLE::PORTABLE)
+elseif(TARGET PORTABLE)
+  set(_PORTABLE_TARGET PORTABLE)
+else()
+  message(FATAL_ERROR
+    "PORTABLE target not available. Provide PORTABLE or add the portable subdirectory."
+  )
+endif()
+
+# Back-compat alias used throughout this project
+if(NOT TARGET DEPS::deps)
+  add_library(DEPS::deps ALIAS "${_PORTABLE_TARGET}")
+endif()
+
+target_link_libraries(psz_hip_compile_settings
+  INTERFACE
+    DEPS::deps
+)
+
+find_package(FZG QUIET)
+if(NOT TARGET FZG::fzg_hip AND NOT FZG_FOUND)
+  add_subdirectory(codec/fzg)
+endif()
+
+find_package(PHF QUIET)
+if(NOT TARGET PHF::phf_hip AND NOT PHF_FOUND)
+  add_subdirectory(codec/hf)
+endif()
+
+# ------------------------------------------------------------------------------
+# Libraries
+# ------------------------------------------------------------------------------
+
+add_library(psz_hip_stat
+  psz/src/stat/compare.stl.cc
+  psz/src/stat/identical/all.hip
+  psz/src/stat/identical/all.thrust.hip
+  psz/src/stat/extrema/f4.hip
+  psz/src/stat/extrema/f8.hip
+  psz/src/stat/extrema/f4.thrust.hip
+  psz/src/stat/extrema/f8.thrust.hip
+  psz/src/stat/assess/f4.hip
+  psz/src/stat/assess/f8.hip
+  psz/src/stat/assess/f4.thrust.hip
+  psz/src/stat/assess/f8.thrust.hip
+  psz/src/stat/calcerr/f4.hip
+  psz/src/stat/calcerr/f8.hip
+  psz/src/stat/maxerr/max_err.hip
+  psz/src/stat/maxerr/f4.thrust.hip
+  psz/src/stat/maxerr/f8.thrust.hip
+)
+target_link_libraries(psz_hip_stat
+  PUBLIC
+    psz_hip_compile_settings
+    roc::rocthrust
+)
 
 # FUNC={core,api}, BACKEND={serial,cuda,...}
-add_library(pszkernel_seq src/kernel/l23.seq.cc src/kernel/hist.seq.cc
-                          src/kernel/histsp.seq.cc src/kernel/spvn.seq.cc)
-target_link_libraries(pszkernel_seq PUBLIC pszcompile_settings)
+add_library(psz_seq_core
+  psz/src/kernel/lrz.seq.cc
+  psz/src/kernel/hist_generic.seq.cc
+  psz/src/kernel/histsp.seq.cc
+  psz/src/kernel/spvn.seq.cc
+)
+target_link_libraries(psz_seq_core
+  PUBLIC
+    psz_hip_compile_settings
+)
 
-add_library(pszkernel_hip src/kernel/spvn.hip src/kernel/l23.hip src/kernel/l23r.hip
-                          src/kernel/hist.hip src/kernel/histsp.hip
-                          src/kernel/dryrun.hip)
-target_link_libraries(pszkernel_hip PUBLIC pszcompile_settings)
+add_library(psz_hip_mem
+  psz/src/mem/buf_comp.cc
+)
+target_link_libraries(psz_hip_mem
+  PUBLIC
+    psz_hip_compile_settings
+    psz_hip_stat
+    DEPS::deps
+    PHF::phf_hip
+    hip::host
+)
 
-add_library(pszmem src/mem/memseg.cc src/mem/memseg_hip.cc)
-target_link_libraries(pszmem PUBLIC pszcompile_settings hip::host)
+add_library(psz_hip_core
+  psz/src/kernel/hist_generic.hip
+  psz/src/kernel/histsp.hip
+  psz/src/kernel/spvn.hip
+  psz/src/kernel/lrz_c.hip
+  psz/src/kernel/lrz_x.hip
+  psz/src/kernel/proto_lrz_c.hip
+  psz/src/kernel/proto_lrz_x.hip
+  psz/src/kernel/spline3.hip
+)
+target_link_libraries(psz_hip_core
+  PUBLIC
+    psz_hip_compile_settings
+    psz_hip_mem
+    PHF::phf_hip
+    hip::device
+)
 
-add_library(pszutils_seq src/utils/vis_stat.cc src/context.cc)
-target_link_libraries(pszutils_seq PUBLIC pszcompile_settings)
+add_library(psz_hip_utils
+  psz/src/utils/viewer.cc
+  psz/src/utils/viewer.hip
+  psz/src/utils/verinfo.cc
+  psz/src/utils/verinfo.hip
+  psz/src/utils/vis_stat.cc
+  psz/src/utils/context.cc
+  psz/src/utils/header.c
+)
+target_link_libraries(psz_hip_utils
+  PUBLIC
+    psz_hip_compile_settings
+    PHF::phf_hip
+    hip::host
+)
 
-add_library(pszspv_hip src/kernel/spv.hip)
-target_link_libraries(pszspv_hip PUBLIC pszcompile_settings ${rocthrust_LIBRARIES})
+add_library(hipsz
+  psz/src/compressor.cc
+  psz/src/libcusz.cc
+)
+target_link_libraries(hipsz
+  PUBLIC
+    psz_hip_compile_settings
+    psz_hip_core
+    psz_hip_stat
+    psz_hip_mem
+    psz_hip_utils
+    PHF::phf_hip
+    FZG::fzg_hip
+    hip::host
+)
 
-add_library(
-  pszhfbook_seq src/hf/hfbk_impl1.seq.cc src/hf/hfbk_impl2.seq.cc
-                src/hf/hfbk_internal.seq.cc src/hf/hfbk.seq.cc src/hf/hfcanon.seq.cc)
-target_link_libraries(pszhfbook_seq PUBLIC pszcompile_settings)
+# ------------------------------------------------------------------------------
+# Executable
+# ------------------------------------------------------------------------------
 
-add_library(pszhf_hip src/hf/hfclass.hip src/hf/hf_codec.hip)
-target_link_libraries(pszhf_hip PUBLIC pszcompile_settings pszstat_hip
-                                       pszhfbook_seq hip::device)
-
-add_library(pszcomp_hip src/compressor.cc)
-target_link_libraries(pszcomp_hip PUBLIC pszcompile_settings pszkernel_hip
-                                  pszstat_hip pszhf_hip hip::host)
-
-add_library(hipsz src/cusz_lib.cc)
-target_link_libraries(hipsz PUBLIC pszcomp_hip pszhf_hip pszspv_hip pszstat_seq
-                                   pszutils_seq pszmem)
-
-add_executable(hipsz-bin src/cli_psz.cc)
+add_executable(hipsz-bin psz/src/cli/cli.cc)
+set_source_files_properties(psz/src/cli/cli.cc PROPERTIES LANGUAGE HIP)
 target_link_libraries(hipsz-bin PRIVATE hipsz)
 set_target_properties(hipsz-bin PROPERTIES OUTPUT_NAME hipsz)
 
-# enable examples and testing
+# ------------------------------------------------------------------------------
+# Examples / Tests
+# ------------------------------------------------------------------------------
+
 if(PSZ_BUILD_EXAMPLES)
   add_subdirectory(example)
 endif()
@@ -112,39 +223,66 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-# installation
-install(TARGETS pszcompile_settings EXPORT CUSZTargets)
+# ------------------------------------------------------------------------------
+# Installation (CUSZ:: namespace, back compat)
+# ------------------------------------------------------------------------------
 
-install(TARGETS pszkernel_seq EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszkernel_hip EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszstat_seq EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszstat_hip EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszmem EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszutils_seq EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszspv_hip EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszhfbook_seq EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszhf_hip EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS pszcomp_hip EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS hipsz EXPORT CUSZTargets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS hipsz-bin EXPORT CUSZTargets)
+install(TARGETS psz_hip_compile_settings EXPORT CUSZTargets)
+
+install(TARGETS
+  psz_seq_core
+  psz_hip_core
+  psz_hip_stat
+  psz_hip_mem
+  psz_hip_utils
+  hipsz
+  EXPORT CUSZTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(TARGETS
+  hipsz-bin
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 install(
   EXPORT CUSZTargets
   NAMESPACE CUSZ::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ/)
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ
+)
+
 include(CMakePackageConfigHelpers)
+
 configure_package_config_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/CUSZConfig.cmake.in
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CUSZConfig.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfig.cmake"
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ)
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ
+)
+
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfigVersion.cmake"
   VERSION "${PROJECT_VERSION}"
-  COMPATIBILITY AnyNewerVersion)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfig.cmake"
-              "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfigVersion.cmake"
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ)
+  COMPATIBILITY AnyNewerVersion
+)
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cusz)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/cusz_version.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cusz/)
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/CUSZConfigVersion.cmake"
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/CUSZ
+)
+
+install(DIRECTORY
+  portable/include
+  psz/include
+  codec/hf/include
+  codec/fzg/include
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cusz
+)
+
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/psz/include/cusz_version.h"
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cusz
+)

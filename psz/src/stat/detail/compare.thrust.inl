@@ -12,6 +12,8 @@
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
 #include <thrust/tuple.h>
+#include <thrust/transform_reduce.h>
+#include <thrust/functional.h>
 
 #include "cusz/type.h"
 #include "detail/compare.hh"

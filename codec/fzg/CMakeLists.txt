@@ -1,12 +1,21 @@
 
 cmake_minimum_required(VERSION 3.18)
 
-project(FZG
-  VERSION 0.1.0
-  LANGUAGES CXX CUDA
-)
-
-find_package(CUDAToolkit REQUIRED)
+# Detect if we're building with HIP or CUDA based on parent project
+if(PSZ_USE_HIP OR DEFINED PSZ_BACKEND AND (PSZ_BACKEND STREQUAL "HIP" OR PSZ_BACKEND STREQUAL "hip"))
+  project(FZG
+    VERSION 0.1.0
+    LANGUAGES CXX HIP
+  )
+  set(_FZG_USE_HIP ON)
+else()
+  project(FZG
+    VERSION 0.1.0
+    LANGUAGES CXX CUDA
+  )
+  find_package(CUDAToolkit REQUIRED)
+  set(_FZG_USE_HIP OFF)
+endif()
 
 # ------------------------------------------------------------------------------
 # Dependency: PORTABLE (installed or fallback)
@@ -31,30 +40,57 @@ endif()
 # Library
 # ------------------------------------------------------------------------------
 
-add_library(fzg_cu
-  src/fzg_hl.cc
-  src/fzg_kernel.cu
-  src/fzg_buf.cc
-)
+if(_FZG_USE_HIP)
+  add_library(fzg_hip
+    src/fzg_hl.cc
+    src/fzg_kernel.hip
+    src/fzg_buf.cc
+  )
 
-add_library(FZG::fzg_cu ALIAS fzg_cu)
+  add_library(FZG::fzg_hip ALIAS fzg_hip)
 
-target_include_directories(fzg_cu
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-)
+  target_include_directories(fzg_hip
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
 
-target_link_libraries(fzg_cu
-  PUBLIC
-    CUDA::cudart
-    PORTABLE
-)
+  target_link_libraries(fzg_hip
+    PUBLIC
+      hip::host
+      PORTABLE
+  )
 
-set_target_properties(fzg_cu
-  PROPERTIES
-    LINKER_LANGUAGE CXX
-)
+  set_target_properties(fzg_hip
+    PROPERTIES
+      LINKER_LANGUAGE CXX
+  )
+else()
+  add_library(fzg_cu
+    src/fzg_hl.cc
+    src/fzg_kernel.cu
+    src/fzg_buf.cc
+  )
+
+  add_library(FZG::fzg_cu ALIAS fzg_cu)
+
+  target_include_directories(fzg_cu
+    PUBLIC
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  )
+
+  target_link_libraries(fzg_cu
+    PUBLIC
+      CUDA::cudart
+      PORTABLE
+  )
+
+  set_target_properties(fzg_cu
+    PROPERTIES
+      LINKER_LANGUAGE CXX
+  )
+endif()
 
 # ------------------------------------------------------------------------------
 # Installation + package config
@@ -63,13 +99,23 @@ set_target_properties(fzg_cu
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-install(TARGETS fzg_cu
-  EXPORT FZGTargets
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+if(_FZG_USE_HIP)
+  install(TARGETS fzg_hip
+    EXPORT FZGTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  )
+else()
+  install(TARGETS fzg_cu
+    EXPORT FZGTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  )
+endif()
 
 install(DIRECTORY
   include/

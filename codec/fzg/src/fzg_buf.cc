@@ -87,9 +87,7 @@ struct fzg::Buf2::impl {
     // Layout is already:
     //   [header | bitflag | start_pos | comp_out]
     // so we only need to copy the header into the beginning of d_archive.
-    cudaMemcpyAsync(
-        d_archive.get(), &header, sizeof(Header), cudaMemcpyHostToDevice,
-        static_cast<cudaStream_t>(stream));
+    memcpy_allkinds_async<H2D>(d_archive.get(), reinterpret_cast<uint8_t*>(&header), sizeof(Header), stream);
   }
 
   void clear_buffer()

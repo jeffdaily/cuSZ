@@ -1,69 +1,77 @@
-# utils for test
-add_library(psztest_utils_hip src/utils/rand.seq.cc src/utils/rand.cu_hip.cc)
-target_link_libraries(psztest_utils_hip hip::host hip::device ${hiprand_LIBRARIES})
 
-# testing sp vector
-add_executable(spv_hip src/test_spv.hip)
-target_link_libraries(spv_hip PRIVATE pszspv_hip psztest_utils_hip)
-add_test(test_spv_hip spv_hip)
-
-add_library(psztestcompile_settings INTERFACE)
+add_library(psz_hip_test_compile_settings INTERFACE)
 target_include_directories(
-  psztestcompile_settings
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../src/>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/>)
+  psz_hip_test_compile_settings
+  INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../portable/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../psz/include/>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../psz/src/>
+)
 
-# correctness, include kernel `.inl` directly ### test_typing test core
-# functionality Level-0 basic typing
+# utils for test
+add_library(psz_hip_test_utils src/utils/rand.seq.cc src/utils/rand.cu_hip.cc)
+target_link_libraries(psz_hip_test_utils hip::host ${hiprand_LIBRARIES})
+
+# functionality
 add_executable(zigzag src/test_zigzag_codec.cc)
-target_link_libraries(zigzag PRIVATE psztestcompile_settings)
+target_link_libraries(zigzag PRIVATE psz_hip_test_compile_settings)
 add_test(test_zigzag zigzag)
 
 # Level-1 subroutine
-add_executable(l1_scan src/test_l1_l23scan_hip.cpp)
-target_link_libraries(l1_scan PRIVATE pszcompile_settings
-  psztestcompile_settings)
-add_test(test_l1_scan l1_scan)
-
-add_executable(l1_compact src/test_l1_compact_hip.cpp)
-target_link_libraries(l1_compact PRIVATE pszcompile_settings
-  psztestcompile_settings psztest_utils_hip)
+add_executable(l1_compact src/test_l1_compact.hip)
+target_link_libraries(l1_compact PRIVATE psz_hip_compile_settings
+  psz_hip_test_compile_settings psz_hip_test_utils)
 add_test(test_l1_compact l1_compact)
 
 # Level-2 kernel (template; unit tests)
-add_executable(l2_cudaproto src/test_l2_cudaproto_hip.cpp)
-target_link_libraries(
-  l2_cudaproto PRIVATE pszcompile_settings psztestcompile_settings pszmem
-  pszstat_hip)
-add_test(test_l2_cudaproto l2_cudaproto)
-
-add_executable(histsp_hip src/test_histsp.hip)
-target_link_libraries(l2_histsp PRIVATE pszcompile_settings pszmem pszstat_hip
-  pszkernel_hip pszkernel_seq pszstat_seq)
-add_test(test_histsp histsp_hip)
+add_executable(histsp_hip src/tune_histsp.hip)
+target_link_libraries(histsp_hip
+  PRIVATE psz_hip_compile_settings
+  psz_seq_core
+  hipsz
+)
+add_test(test_histsp_hip histsp_hip)
 
 # Level-3 kernel with configuration (low-level API)
-add_executable(l3_cuda_pred src/test_l3_cuda_pred.cc)
-target_link_libraries(
-  l3_cuda_pred PRIVATE pszkernel_hip psztest_utils_hip pszstat_seq pszstat_hip
-  pszmem hip::host)
-add_test(test_l3_cuda_pred l3_cuda_pred)
-
 add_executable(lrz_seq src/test_lrz.seq.cc)
-target_link_libraries(lrz_seq PRIVATE psztestcompile_dp)
+target_link_libraries(lrz_seq
+  PRIVATE psz_hip_test_compile_settings psz_seq_core)
 add_test(test_lrz_seq lrz_seq)
 
-add_executable(lrzsp_hip src/test_lrzsp.hip)
-target_link_libraries(
-  lrzsp_hip PRIVATE psztestcompile_settings
-  pszkernel_hip
-  psztest_utils_hip
-  pszspv_hip
-  pszstat_seq
-  pszstat_hip
-  pszmem)
-add_test(test_lrzsp_hip lrzsp_hip)
-
 add_executable(statfn src/test_statfn.cc)
-target_link_libraries(statfn PRIVATE psztestcompile_settings psztest_utils_hip
-  pszstat_hip pszstat_seq pszmem)
+target_link_libraries(statfn
+  PRIVATE psz_hip_test_compile_settings psz_hip_compile_settings
+  psz_hip_test_utils psz_hip_mem
+)
+
+add_executable(stat_identical src/test_identical.cc)
+target_link_libraries(stat_identical
+  PRIVATE
+  psz_hip_test_compile_settings
+  psz_hip_compile_settings
+  psz_hip_test_utils
+  psz_hip_stat
+  hip::host
+)
+add_test(test_stat_identical stat_identical)
+
+add_executable(stat_max_error src/test_max_error.cc)
+target_link_libraries(stat_max_error
+  PRIVATE
+  psz_hip_test_compile_settings
+  psz_hip_compile_settings
+  psz_hip_test_utils
+  psz_hip_stat
+  hip::host
+)
+add_test(test_stat_max_error stat_max_error)
+
+add_executable(mem_unique src/test_mem_unique.hip)
+target_link_libraries(mem_unique
+  PRIVATE
+  psz_hip_compile_settings
+  psz_hip_test_compile_settings
+  psz_hip_mem
+  hip::host
+)
+add_test(test_mem_unique mem_unique)

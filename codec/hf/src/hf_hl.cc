@@ -24,11 +24,11 @@ int high_level<E>::build_book(phf::Buf<E>* buf, u4* h_hist, u2 const rt_bklen, H
 
   phf_CPU_build_canonized_codebook_v2<E, H4>(
       h_hist, rt_bklen, buf->book_h(), buf->rvbk_h(), buf->rvbk_bytes());
-  memcpy_allkinds_async<H2D>(buf->book_d(), buf->book_h(), rt_bklen, (cudaStream_t)stream);
+  memcpy_allkinds_async<H2D>(buf->book_d(), buf->book_h(), rt_bklen, stream);
 
   // TODO duplicate memory copy
   memcpy_allkinds_async<H2D>(
-      buf->rvbk_d(), buf->rvbk_h(), buf->rvbk_bytes(), (cudaStream_t)stream);
+      buf->rvbk_d(), buf->rvbk_h(), buf->rvbk_bytes(), stream);
 
   return 0;
 }

@@ -1,5 +1,10 @@
 #include "mem/cxx_memobj.h"
 
+#if defined(_PORTABLE_USE_HIP) || defined(__HIP_PLATFORM_AMD__)
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#endif
+
 // The next-line: failsafe macro check
 #include <linux/limits.h>
 

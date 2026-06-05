@@ -1,9 +1,19 @@
-#include "lrz_c.cuhip.inl"
+#include <hip/hip_runtime.h>
+#include "macro/c_cu2hip_0_translation.h"
+#include "macro/c_cu2hip_1_fix_primitives.h"
+#include "detail/lrz_c.cuhip.inl"
+#include "mem/buf_comp.hh"
 
-INSTANCIATE_GPU_L23R_1param(f4);
-INSTANCIATE_GPU_L23R_1param(f8);
+using psz::Toggle;
 
-#undef INSTANCIATE_GPU_L23R_1param
-#undef INSTANCIATE_GPU_L23R_2params
-#undef INSTANCIATE_GPU_L23R_3params
-#undef INSTANCIATE_GPU_L23R_4params
+template struct psz::module::GPU_c_lorenzo_nd<
+    float, psz::PredConfig<float, psz::PredFunc<Toggle::ZigZagDisabled>>, psz::Buf_Comp<float>>;
+
+template struct psz::module::GPU_c_lorenzo_nd<
+    double, psz::PredConfig<double, psz::PredFunc<Toggle::ZigZagDisabled>>, psz::Buf_Comp<double>>;
+
+template struct psz::module::GPU_c_lorenzo_nd<
+    float, psz::PredConfig<float, psz::PredFunc<Toggle::ZigZagEnabled>>, psz::Buf_Comp<float>>;
+
+template struct psz::module::GPU_c_lorenzo_nd<
+    double, psz::PredConfig<double, psz::PredFunc<Toggle::ZigZagEnabled>>, psz::Buf_Comp<double>>;
