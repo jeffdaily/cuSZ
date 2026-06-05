@@ -1,5 +1,3 @@
-#include <cuda_runtime.h>
-
 #include <cstdio>
 #include <string>
 
@@ -17,7 +15,7 @@ using T = u4;
 template <psz_runtime policy, typename T>
 void hist(
     bool optim, T* whole_numbers, size_t const len, uint32_t* hist, size_t const bklen, float* t,
-    cudaStream_t stream)
+    GPU_BACKEND_SPECIFIC_STREAM stream)
 {
   int hist_generic_grid_dim, hist_generic_block_dim, hist_generic_shmem_use, hist_generic_repeat;
   psz::module::GPU_histogram_generic<T>::init(
@@ -47,7 +45,7 @@ void real_data_test(size_t len, size_t bklen, string fname)
   _portable::utils::fromfile(fname, wn_h.get(), len);
   memcpy_allkinds<H2D>(wn_d.get(), wn_h.get(), len);
 
-  cudaStream_t stream;
+  GPU_BACKEND_SPECIFIC_STREAM stream;
   cudaStreamCreate(&stream);
 
   float tbs, tos, tbg, tog;
@@ -119,7 +117,7 @@ void dummy_data_test()
   }
   memcpy_allkinds<H2D>(wn_d.get(), wn_h.get(), len);
 
-  cudaStream_t stream;
+  GPU_BACKEND_SPECIFIC_STREAM stream;
   cudaStreamCreate(&stream);
 
   float tbs, tos, tbg, tog;

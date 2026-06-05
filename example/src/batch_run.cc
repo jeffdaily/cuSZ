@@ -1,4 +1,3 @@
-#include <cuda_runtime.h>
 
 #include <sstream>
 #include <vector>
@@ -7,6 +6,7 @@
 #include "cusz_rev1.h"
 #include "detail/compare.hh"
 #include "ex_utils2.hh"
+#include "macro/c_cu2hip_0_translation.h"
 #include "mem/cxx_backends.h"
 #include "utils/io.hh"
 
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 
   auto d_compressed = MAKE_UNIQUE_DEVICE(uint8_t, oribytes);
 
-  cudaStream_t stream;
+  GPU_BACKEND_SPECIFIC_STREAM stream;
   cudaStreamCreate(&stream);
 
   uint8_t* p_compressed;

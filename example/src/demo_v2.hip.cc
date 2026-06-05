@@ -86,8 +86,8 @@ void f4demo(std::string fname, psz_len3 len3, psz_predictor predictor)
   uint8_t* compressed;
   size_t compressed_len{0}, oribytes = sizeof(float) * f4data_len;
 
-  hipMalloc(&f4d_uncomp, oribytes), hipMallocHost(&f4h_uncomp, oribytes);
-  hipMalloc(&f4d_decomp, oribytes), hipMallocHost(&f4h_decomp, oribytes);
+  hipMalloc(&f4d_uncomp, oribytes), hipMallocHost((void**)&f4h_uncomp, oribytes);
+  hipMalloc(&f4d_decomp, oribytes), hipMallocHost((void**)&f4h_decomp, oribytes);
   utils::fromfile(fname, f4h_uncomp, f4data_len);
   hipMemcpy(f4d_uncomp, f4h_uncomp, oribytes, hipMemcpyHostToDevice);
 
@@ -113,8 +113,8 @@ void f8demo(std::string fname, psz_len3 len3, psz_predictor predictor)
   uint8_t* compressed;
   size_t compressed_len{0}, oribytes = sizeof(double) * f8data_len;
 
-  hipMalloc(&f8d_uncomp, oribytes), hipMallocHost(&f8h_uncomp, oribytes);
-  hipMalloc(&f8d_decomp, oribytes), hipMallocHost(&f8h_decomp, oribytes);
+  hipMalloc(&f8d_uncomp, oribytes), hipMallocHost((void**)&f8h_uncomp, oribytes);
+  hipMalloc(&f8d_decomp, oribytes), hipMallocHost((void**)&f8h_decomp, oribytes);
   utils::fromfile(fname, f8h_uncomp, f8data_len);
   hipMemcpy(f8d_uncomp, f8h_uncomp, oribytes, hipMemcpyHostToDevice);
 

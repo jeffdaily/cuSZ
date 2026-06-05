@@ -1,7 +1,7 @@
-#include <cuda_runtime.h>
 
 #include "fzg_hl.hh"
 #include "fzg_impl.hh"
+#include "macro/c_cu2hip_0_translation.h"
 #include "mem/cxx_backends.h"
 #include "utils/io.hh"
 

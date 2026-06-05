@@ -32,7 +32,7 @@ int sublen, pardeg;
 uint8_t* d_compressed;
 float time_hist;
 size_t outlen;
-cudaStream_t stream;
+GPU_BACKEND_SPECIFIC_STREAM stream;
 float time_encode = (float)INT_MAX;
 float time_decode = (float)INT_MAX;
 int which_test = 1;
@@ -67,9 +67,9 @@ phf_header header;
 #define PREPARE   \
   MALLOC_BUFFERS; \
   LOAD_FILE;      \
-  cudaStreamCreate(&stream);
+  stream = create_stream();
 
-#define CLEANUP cudaStreamDestroy(stream);
+#define CLEANUP destroy_stream(stream);
 
 #define PRINT_REPORT                                    \
   print_GBps<E>(len, time_encode, "hf_encode");         \
