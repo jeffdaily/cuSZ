@@ -11,6 +11,7 @@
 
 #include <queue>
 #include <stdexcept>
+#include <string>
 
 #include "hf_impl.hh"
 

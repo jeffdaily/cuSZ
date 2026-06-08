@@ -81,7 +81,7 @@ void psz_review_comp_time_breakdown(void* _r, psz_header* h)
 
 string const psz_report_query_pred(psz_predictor const p)
 {
-  const std::unordered_map<psz_predictor const, std::string const> lut = {
+  const std::unordered_map<psz_predictor, std::string> lut = {
       {psz_predictor::Lorenzo, "Lorenzo"},
       {psz_predictor::LorenzoZigZag, "Lrz-ZigZag"},
       {psz_predictor::LorenzoProto, "Lrz-Proto"},
@@ -92,7 +92,7 @@ string const psz_report_query_pred(psz_predictor const p)
 
 string const psz_report_query_hist(psz_hist const h)
 {
-  const std::unordered_map<psz_hist const, std::string const> lut = {
+  const std::unordered_map<psz_hist, std::string> lut = {
       {psz_hist::HistogramGeneric, "Hist-generic"},
       {psz_hist::HistogramSparse, "Hist-sparse"},
       {psz_hist::NullHistogram, "Hist-(null)"},
@@ -102,7 +102,7 @@ string const psz_report_query_hist(psz_hist const h)
 
 string const psz_report_query_codec1(psz_codec const c)
 {
-  const std::unordered_map<psz_codec const, std::string const> lut = {
+  const std::unordered_map<psz_codec, std::string> lut = {
       {psz_codec::Huffman, "Huffman"},
       {psz_codec::FZCodec, "FZGPU-Codec"},
   };

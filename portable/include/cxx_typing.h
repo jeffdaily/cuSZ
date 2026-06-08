@@ -49,7 +49,11 @@ template <> struct TypeSym<u1> { static const _portable_dtype type = U1; static 
 template <> struct TypeSym<u2> { static const _portable_dtype type = U2; static const int width = sizeof(u2); };
 template <> struct TypeSym<u4> { static const _portable_dtype type = U4; static const int width = sizeof(u4); };
 template <> struct TypeSym<u8> { static const _portable_dtype type = U8; static const int width = sizeof(u8); };
+// On Windows, ull (unsigned long long) is the same underlying type as u8
+// (uint64_t), so the specialization above already covers this case.
+#if !defined(_WIN32)
 template <> struct TypeSym<ull> { static const _portable_dtype type = ULL; static const int width = sizeof(ull); };
+#endif
 // clang-format on
 
 }  // namespace _portable

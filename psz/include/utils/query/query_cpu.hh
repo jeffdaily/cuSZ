@@ -17,6 +17,11 @@
 
 #include "cusz/type.h"
 
+#ifdef _WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
+
 struct cpu_diagnostics {
   static std::string exec_shellcmd(const char* cmd)
   {

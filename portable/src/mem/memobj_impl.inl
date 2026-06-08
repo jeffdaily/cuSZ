@@ -5,8 +5,10 @@
 #include "macro/c_cu2hip_0_translation.h"
 #endif
 
-// The next-line: failsafe macro check
+// The next-line: failsafe macro check (Linux-only)
+#ifndef _WIN32
 #include <linux/limits.h>
+#endif
 
 #include <fstream>
 #include <iostream>

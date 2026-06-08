@@ -10,8 +10,10 @@
 #ifndef _PORTABLE_MEM_CXX_MEMOBJ_H
 #define _PORTABLE_MEM_CXX_MEMOBJ_H
 
-// The next-line: failsafe macro check
+// The next-line: failsafe macro check (Linux-only)
+#ifndef _WIN32
 #include <linux/limits.h>
+#endif
 
 #include <memory>
 #include <vector>

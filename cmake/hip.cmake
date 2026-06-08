@@ -42,6 +42,12 @@ target_compile_definitions(psz_hip_compile_settings
   INTERFACE
     $<$<COMPILE_LANG_AND_ID:HIP,Clang>:__STRICT_ANSI__>
     __HIP_PLATFORM_AMD__
+    # On Windows (ROCm/TheRock 7.14), amd_hip_bf16.h redefines __shfl_*_sync
+    # overloads that conflict with the template definitions already pulled in
+    # by amd_warp_sync_functions.h, causing "redefinition of default argument"
+    # errors when compiling thrust-based .hip files. Suppress those bf16 sync
+    # overloads; the cu2hip macros provide __shfl_*_sync via __shfl_* instead.
+    $<$<BOOL:${WIN32}>:HIP_DISABLE_WARP_SYNC_BUILTINS>
 )
 
 target_compile_options(psz_hip_compile_settings
@@ -182,6 +188,7 @@ add_library(psz_hip_utils
 target_link_libraries(psz_hip_utils
   PUBLIC
     psz_hip_compile_settings
+    psz_hip_stat
     PHF::phf_hip
     hip::host
 )

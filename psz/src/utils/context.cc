@@ -13,7 +13,9 @@
 
 #include "cusz/context.h"
 
+#ifndef _WIN32
 #include <cxxabi.h>
+#endif
 
 #include <fstream>
 
@@ -321,13 +323,16 @@ void psz::str_helper::print_datasegment_tablehead()
 
 std::string psz::str_helper::demangle(const char* name)
 {
+#ifndef _WIN32
   int status = -4;
   char* res = abi::__cxa_demangle(name, nullptr, nullptr, &status);
-
   const char* const demangled_name = (status == 0) ? res : name;
   std::string ret_val(demangled_name);
   free(res);
   return ret_val;
+#else
+  return std::string(name);
+#endif
 }
 
 void psz::str_helper::set_report(psz_ctx* ctx, const char* in_str)
@@ -652,8 +657,14 @@ void psz::str_helper::parse_argv(psz_ctx* ctx, int const argc, char** const argv
       }
       else {
         const char* notif_prefix = "invalid option value at position ";
+#ifndef _WIN32
         char* notif;
         int size = asprintf(&notif, "%d: %s", i, argv[i]);
+#else
+        char notif_buf[512];
+        snprintf(notif_buf, sizeof(notif_buf), "%d: %s", i, argv[i]);
+        char* notif = notif_buf;
+#endif
         cerr << LOG_ERR << notif_prefix << "\e[1m" << notif << "\e[0m" << "\n";
         cerr << std::string(strlen(LOG_NULL) + strlen(notif_prefix), ' ');
         cerr << "\e[1m";
@@ -666,8 +677,14 @@ void psz::str_helper::parse_argv(psz_ctx* ctx, int const argc, char** const argv
     }
     else {
       const char* notif_prefix = "invalid option at position ";
+#ifndef _WIN32
       char* notif;
       int size = asprintf(&notif, "%d: %s", i, argv[i]);
+#else
+      char notif_buf[512];
+      snprintf(notif_buf, sizeof(notif_buf), "%d: %s", i, argv[i]);
+      char* notif = notif_buf;
+#endif
       cerr << LOG_ERR << notif_prefix << "\e[1m" << notif
            << "\e[0m"
               "\n"
