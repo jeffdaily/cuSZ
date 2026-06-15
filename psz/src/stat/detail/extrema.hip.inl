@@ -1,3 +1,12 @@
+/**
+ * @file extrema.hip.inl
+ * @author Jeff Daily <jeff.daily@amd.com>
+ * @brief HIP/ROCm port of the extrema statistics kernels.
+ *
+ * Copyright (c) 2026 Advanced Micro Devices, Inc.
+ *
+ */
+
 #include <hip/hip_runtime.h>
 #include "macro/c_cu2hip_0_translation.h"
 

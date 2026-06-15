@@ -1,3 +1,12 @@
+/**
+ * @file test_mem_unique.hip
+ * @author Jeff Daily <jeff.daily@amd.com>
+ * @brief HIP/ROCm port of the unique-memory-object test.
+ *
+ * Copyright (c) 2026 Advanced Micro Devices, Inc.
+ *
+ */
+
 #include <hip/hip_runtime.h>
 
 #include <cassert>

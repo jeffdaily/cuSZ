@@ -1,4 +1,6 @@
 // 24-06-02 by J. Tian (HIP version)
+// HIP/ROCm port author: Jeff Daily <jeff.daily@amd.com>
+// Copyright (c) 2026 Advanced Micro Devices, Inc.
 
 #include <hip/hip_runtime.h>
 #include "macro/c_cu2hip_0_translation.h"

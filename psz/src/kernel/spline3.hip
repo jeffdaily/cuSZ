@@ -1,3 +1,12 @@
+/**
+ * @file spline3.hip
+ * @author Jeff Daily <jeff.daily@amd.com>
+ * @brief HIP/ROCm port of the spline3 predictor kernel instantiations.
+ *
+ * Copyright (c) 2026 Advanced Micro Devices, Inc.
+ *
+ */
+
 #include <hip/hip_runtime.h>
 #include "macro/c_cu2hip_0_translation.h"
 #include "macro/c_cu2hip_1_fix_primitives.h"

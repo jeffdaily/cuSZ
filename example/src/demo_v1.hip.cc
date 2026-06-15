@@ -1,11 +1,13 @@
 /**
- * @file demo_capi.cuda.cc
+ * @file demo_v1.hip.cc
  * @author Jiannan Tian
- * @brief Also see demo_capi_minimal.cc for a more concise view.
+ * @author Jeff Daily <jeff.daily@amd.com>
+ * @brief HIP/ROCm port of the C-API demo. Also see demo_capi_minimal.cc for a more concise view.
  * @version 0.10
  * @date 2022-05-06
  *
  * (C) 2022 by Washington State University, Argonne National Laboratory
+ * Copyright (c) 2026 Advanced Micro Devices, Inc.
  *
  */
 

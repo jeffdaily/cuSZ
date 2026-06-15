@@ -1,5 +1,7 @@
 // HIP version of device info utilities
 // Replaces verinfo.cu and verinfo_nv.cu for HIP backend
+// HIP/ROCm port author: Jeff Daily <jeff.daily@amd.com>
+// Copyright (c) 2026 Advanced Micro Devices, Inc.
 
 #include <hip/hip_runtime.h>
 
